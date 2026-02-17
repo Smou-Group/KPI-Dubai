@@ -8,6 +8,9 @@
   <!-- Chart.js (اختياري) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
+  <!-- Excel (SheetJS) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     :root{
       --brand:#1c6670;
@@ -92,10 +95,14 @@
       <div class="toolbar">
         <span class="chip">متوسط الإجمالي: <b id="grandTotal">0</b> / 100</span>
         <span class="chip">مجموع الأوزان: <b id="sumWeightsTop">—</b></span>
+
         <button class="mutedBtn" id="addRepBtn">إضافة مندوب</button>
-        <button id="exportBtn">تصدير (JSON)</button>
-        <button id="importBtn">استيراد (JSON)</button>
-        <input class="fileInput" id="importFile" type="file" accept="application/json" />
+
+        <!-- Excel -->
+        <button id="exportXlsxBtn">تصدير Excel</button>
+        <button id="importXlsxBtn">استيراد Excel</button>
+        <input class="fileInput" id="importXlsxFile" type="file" accept=".xlsx,.xls" />
+
         <button class="danger" id="resetBtn">مسح القيم</button>
       </div>
     </header>
@@ -113,8 +120,7 @@
         <div class="foot">
           <b>طريقة الحساب:</b><br>
           النقاط لكل بند = <code>min(Actual ÷ Target, 1) × Weight</code><br>
-          ثم يتم تحويل المجموع إلى 100: <code>(Total ÷ SumWeights) × 100</code><br>
-          ✅ بهذه الطريقة لو مجموع الأوزان = 80، أعلى نتيجة ممكنة تصبح 100 بدل 80.
+          ثم يتم تحويل المجموع إلى 100: <code>(Total ÷ SumWeights) × 100</code>
         </div>
       </div>
 
@@ -133,29 +139,21 @@
 </div>
 
 <script>
-/* =========================
-   KPI Web App (Single-file)
-   - LocalStorage
-   - Export/Import JSON
-   - Chart.js optional
-   - Totals normalized to 100
-   ========================= */
+const STORAGE_KEY = "smou_kpi_dubai_reps_v2_excel";
 
-const STORAGE_KEY = "smou_kpi_dubai_reps_v1";
-
-/* البنود (تقدر تعدلها) */
+/* البنود */
 const defaultKpis = [
   { id:"k1", name:"عدد الزيارات الشهرية لمواقع المشاريع", target:80,  weight:10 },
   { id:"k2", name:"عدد الزيارات الشهرية للمكاتب",         target:100, weight:10 },
-  { id:"k3", name:"عدد عروض الأسعار",                   target:25,  weight:10 },
+  { id:"k3", name:"عدد عروض الأسعار",                      target:25,  weight:10 },
   { id:"k4", name:"الالتزام بمواعيد الحضور والانصراف",     target:25,  weight:10 },
-  { id:"k5", name:"المظهر العام",                            target:10,  weight:10 },
+  { id:"k5", name:"المظهر العام",                           target:10,  weight:10 },
   { id:"k6", name:"الالتزام بإرسال التقارير",              target:25,  weight:10 },
   { id:"k7", name:"متابعة نسب العمل الأسبوعي (مسح حديث)",  target:4,   weight:10 },
   { id:"k8", name:"إرسال كشف السوشيال ميديا",              target:4,   weight:10 },
 ];
 
-/* أسماء المناديب (عدّلها) */
+/* أسماء المناديب */
 const defaultReps = [
   "أحمد عبدالله","ماهر عامر","رؤوف المشير","عمر شلش",
   "محمد السعودي","أحمد المغازي","أمير نبيل"
@@ -189,20 +187,17 @@ function ensureActuals(){
 }
 
 function round1(n){ return Math.round((n + Number.EPSILON) * 10) / 10; }
-
-function sumWeights(){
-  return state.kpis.reduce((s,k)=> s + (Number(k.weight) || 0), 0);
-}
+function sumWeights(){ return state.kpis.reduce((s,k)=> s + (Number(k.weight) || 0), 0); }
 
 function scoreFor(kpi, actual){
   const a = Number(actual) || 0;
   const t = Number(kpi.target) || 0;
   const w = Number(kpi.weight) || 0;
   if(t <= 0) return 0;
-  return Math.min(a / t, 1) * w; // يعطي نقاط من وزن البند
+  return Math.min(a / t, 1) * w;
 }
 
-/* ✅ الإجمالي النهائي من 100 حتى لو مجموع الأوزان 80 */
+/* الإجمالي من 100 */
 function totalForRep(idx){
   let total = 0;
   const maxW = sumWeights();
@@ -211,8 +206,7 @@ function totalForRep(idx){
     total += scoreFor(k, actual);
   }
   if(maxW <= 0) return 0;
-  const normalized = (total / maxW) * 100;
-  return round1(normalized);
+  return round1((total / maxW) * 100);
 }
 
 function escapeHtml(s){
@@ -223,7 +217,6 @@ function escapeHtml(s){
 
 function render(){
   ensureActuals();
-
   document.getElementById("sumWeightsTop").textContent = sumWeights();
 
   const thead = document.getElementById("thead");
@@ -251,7 +244,7 @@ function render(){
   state.reps.forEach((name) => {
     const th = document.createElement("th");
     th.className = "wide";
-    th.innerHTML = `${escapeHtml(name)}<div class="hint">Actual / Score</div>`;
+    th.innerHTML = `${escapeHtml(name)}<div class="hint">فعلي / نقاط</div>`;
     tr1.appendChild(th);
   });
 
@@ -318,7 +311,6 @@ function render(){
     tbody.appendChild(tr);
   });
 
-  // Totals row
   const trTot = document.createElement("tr");
   trTot.className = "totalRow";
 
@@ -332,7 +324,6 @@ function render(){
   trTot.appendChild(tdEmpty1);
 
   const tdSumW = document.createElement("td");
-  tdSumW.id = "sumWeightsCell";
   tdSumW.textContent = sumWeights();
   trTot.appendChild(tdSumW);
 
@@ -357,15 +348,11 @@ function renderTotalsAndChart(){
   const avg = totals.length ? round1(totals.reduce((a,b)=>a+b,0)/totals.length) : 0;
   document.getElementById("grandTotal").textContent = avg;
 
-  // تحديث مجموع الأوزان في الصف الأخير
-  const sumWEl = document.getElementById("sumWeightsCell");
-  if(sumWEl) sumWEl.textContent = sumWeights();
-
-  // Chart (اختياري) — لا يوقف الصفحة لو غير متاح
+  // Chart optional
   try{
     if(typeof Chart === "undefined"){
       document.getElementById("chartStatus").textContent = "المخطط غير متاح (Chart.js غير محمّل)";
-      document.getElementById("chartHint").textContent = "الإجمالي شغال، لكن المخطط يحتاج تحميل Chart.js أو اتصال يسمح بالـ CDN.";
+      document.getElementById("chartHint").textContent = "الإجمالي شغال، لكن المخطط يحتاج تحميل Chart.js.";
       return;
     }else{
       document.getElementById("chartStatus").textContent = "النتيجة من 100";
@@ -395,7 +382,117 @@ function renderTotalsAndChart(){
   }
 }
 
-// Actions
+/* =========================
+   Excel Export/Import
+   ========================= */
+
+function exportToExcel(){
+  if(typeof XLSX === "undefined"){
+    alert("مكتبة Excel (XLSX) غير متاحة. تأكد أن xlsx.full.min.js تم تحميله.");
+    return;
+  }
+
+  ensureActuals();
+
+  // Sheet 1: Settings (kpis)
+  const settingsAoA = [
+    ["KPI_ID","KPI_Name","Target","Weight"]
+  ];
+  state.kpis.forEach(k => settingsAoA.push([k.id, k.name, k.target, k.weight]));
+  const wsSettings = XLSX.utils.aoa_to_sheet(settingsAoA);
+
+  // Sheet 2: Actuals
+  // header: KPI_ID, KPI_Name, then reps names...
+  const actualsAoA = [
+    ["KPI_ID","KPI_Name", ...state.reps]
+  ];
+  state.kpis.forEach(k => {
+    const row = [k.id, k.name];
+    const arr = state.actuals[k.id] || Array(state.reps.length).fill(0);
+    state.reps.forEach((_, i)=> row.push(arr[i] ?? 0));
+    actualsAoA.push(row);
+  });
+  const wsActuals = XLSX.utils.aoa_to_sheet(actualsAoA);
+
+  // Sheet 3: Summary
+  const summaryAoA = [["Rep_Name","Total_100"]];
+  state.reps.forEach((name, i)=> summaryAoA.push([name, totalForRep(i)]));
+  summaryAoA.push(["SumWeights", sumWeights()]);
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryAoA);
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsSettings, "Settings");
+  XLSX.utils.book_append_sheet(wb, wsActuals, "Actuals");
+  XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+
+  const filename = `SMOU-KPI-Dubai-${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+function importFromExcel(file){
+  if(typeof XLSX === "undefined"){
+    alert("مكتبة Excel (XLSX) غير متاحة. تأكد أن xlsx.full.min.js تم تحميله.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:"array"});
+
+      // Read Settings
+      const wsSettings = wb.Sheets["Settings"];
+      const wsActuals  = wb.Sheets["Actuals"];
+      if(!wsSettings || !wsActuals){
+        throw new Error("ملف Excel لازم يحتوي Sheets باسم: Settings و Actuals");
+      }
+
+      const settings = XLSX.utils.sheet_to_json(wsSettings, {defval:""});
+      const actualsRows = XLSX.utils.sheet_to_json(wsActuals, {defval:0});
+
+      // Build KPIs
+      const kpis = settings.map(r => ({
+        id: String(r.KPI_ID || "").trim(),
+        name: String(r.KPI_Name || "").trim(),
+        target: Number(r.Target) || 0,
+        weight: Number(r.Weight) || 0
+      })).filter(k => k.id && k.name);
+
+      if(!kpis.length) throw new Error("لم يتم العثور على KPIs في Sheet Settings");
+
+      // Reps from header of Actuals
+      const header = XLSX.utils.sheet_to_json(wsActuals, {header:1, defval:""})[0];
+      // header: KPI_ID, KPI_Name, rep1, rep2...
+      if(!header || header.length < 3) throw new Error("Sheet Actuals غير صحيح");
+      const reps = header.slice(2).map(x => String(x).trim()).filter(Boolean);
+      if(!reps.length) throw new Error("لم يتم العثور على أسماء مناديب في Sheet Actuals");
+
+      // Build actuals map
+      const actuals = {};
+      for(const row of actualsRows){
+        const id = String(row.KPI_ID || "").trim();
+        if(!id) continue;
+        actuals[id] = reps.map(repName => Number(row[repName]) || 0);
+      }
+
+      // Apply state
+      state = { kpis, reps, actuals };
+      saveState();
+      render();
+      alert("✅ تم الاستيراد بنجاح");
+
+    }catch(err){
+      alert("فشل الاستيراد: " + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* =========================
+   Actions
+   ========================= */
+
 document.getElementById("addRepBtn").addEventListener("click", () => {
   const name = prompt("اكتب اسم المندوب الجديد:");
   if(!name) return;
@@ -415,38 +512,17 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   render();
 });
 
-document.getElementById("exportBtn").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "smou-kpi-dubai-reps.json";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+document.getElementById("exportXlsxBtn").addEventListener("click", exportToExcel);
+
+document.getElementById("importXlsxBtn").addEventListener("click", () => {
+  document.getElementById("importXlsxFile").click();
 });
 
-document.getElementById("importBtn").addEventListener("click", () => {
-  document.getElementById("importFile").click();
-});
-
-document.getElementById("importFile").addEventListener("change", async (e) => {
+document.getElementById("importXlsxFile").addEventListener("change", (e) => {
   const file = e.target.files?.[0];
   if(!file) return;
-  try{
-    const txt = await file.text();
-    const imported = JSON.parse(txt);
-    if(!imported.kpis || !imported.reps) throw new Error("ملف غير صالح");
-    if(!imported.actuals) imported.actuals = {};
-    state = imported;
-    saveState();
-    render();
-  }catch(err){
-    alert("فشل الاستيراد: " + err.message);
-  }finally{
-    e.target.value = "";
-  }
+  importFromExcel(file);
+  e.target.value = "";
 });
 
 // Start
