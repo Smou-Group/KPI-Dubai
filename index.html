@@ -70,7 +70,7 @@
     .chartHead h2{margin:0;font-size:16px}
     .legendNote{color:var(--muted);font-size:12px}
     canvas{max-height:420px}
-    .foot{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.4}
+    .foot{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.6}
   </style>
 </head>
 
@@ -82,14 +82,17 @@
       <div class="title">
         <img class="logo" src="logo.png" alt="SMOU Logo" onerror="this.style.display='none'">
         <div>
-          <h1>نظام KPI للمشرفين — دبي</h1>
-          <div class="sub">أدخل القيم لكل مشرف، وسيتم احتساب النتيجة من 100 وإنشاء مخطط الأداء (إذا توفّر Chart.js).</div>
+          <h1>نظام KPI للمناديب — دبي</h1>
+          <div class="sub">
+            أدخل القيم لكل مندوب، وسيتم احتساب النتيجة النهائية <b>من 100</b> (حتى لو مجموع الأوزان 80 أو غيره) + مخطط الأداء (إذا توفّر Chart.js).
+          </div>
         </div>
       </div>
 
       <div class="toolbar">
         <span class="chip">متوسط الإجمالي: <b id="grandTotal">0</b> / 100</span>
-        <button class="mutedBtn" id="addSupervisorBtn">إضافة مشرف</button>
+        <span class="chip">مجموع الأوزان: <b id="sumWeightsTop">—</b></span>
+        <button class="mutedBtn" id="addRepBtn">إضافة مندوب</button>
         <button id="exportBtn">تصدير (JSON)</button>
         <button id="importBtn">استيراد (JSON)</button>
         <input class="fileInput" id="importFile" type="file" accept="application/json" />
@@ -106,8 +109,12 @@
             <tbody id="tbody"></tbody>
           </table>
         </div>
+
         <div class="foot">
-          طريقة الحساب: النقاط = min(Actual ÷ Target, 1) × Weight، والنتيجة النهائية = مجموع النقاط حتى 100.
+          <b>طريقة الحساب:</b><br>
+          النقاط لكل بند = <code>min(Actual ÷ Target, 1) × Weight</code><br>
+          ثم يتم تحويل المجموع إلى 100: <code>(Total ÷ SumWeights) × 100</code><br>
+          ✅ بهذه الطريقة لو مجموع الأوزان = 80، أعلى نتيجة ممكنة تصبح 100 بدل 80.
         </div>
       </div>
 
@@ -126,20 +133,30 @@
 </div>
 
 <script>
-const STORAGE_KEY = "smou_kpi_dubai_v2";
+/* =========================
+   KPI Web App (Single-file)
+   - LocalStorage
+   - Export/Import JSON
+   - Chart.js optional
+   - Totals normalized to 100
+   ========================= */
 
+const STORAGE_KEY = "smou_kpi_dubai_reps_v1";
+
+/* البنود (تقدر تعدلها) */
 const defaultKpis = [
   { id:"k1", name:"عدد الزيارات الشهرية لمواقع المشاريع", target:80,  weight:10 },
   { id:"k2", name:"عدد الزيارات الشهرية للمكاتب",         target:100, weight:10 },
-  { id:"k3", name:"متابعة عروض الأسعار",                   target:25,  weight:10 },
+  { id:"k3", name:"عدد عروض الأسعار",                   target:25,  weight:10 },
   { id:"k4", name:"الالتزام بمواعيد الحضور والانصراف",     target:25,  weight:10 },
-  { id:"k5", name:"جودة العمل",                            target:10,  weight:10 },
+  { id:"k5", name:"المظهر العام",                            target:10,  weight:10 },
   { id:"k6", name:"الالتزام بإرسال التقارير",              target:25,  weight:10 },
   { id:"k7", name:"متابعة نسب العمل الأسبوعي (مسح حديث)",  target:4,   weight:10 },
   { id:"k8", name:"إرسال كشف السوشيال ميديا",              target:4,   weight:10 },
 ];
 
-const defaultSupervisors = [
+/* أسماء المناديب (عدّلها) */
+const defaultReps = [
   "أحمد عبدالله","ماهر عامر","رؤوف المشير","عمر شلش",
   "محمد السعودي","أحمد المغازي","أمير نبيل"
 ];
@@ -150,46 +167,52 @@ let chart = null;
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return { kpis: defaultKpis, supervisors: defaultSupervisors, actuals:{} };
+    if(!raw) return { kpis: defaultKpis, reps: defaultReps, actuals:{} };
     const parsed = JSON.parse(raw);
-    if(!parsed.kpis || !parsed.supervisors) throw new Error("Bad");
+    if(!parsed.kpis || !parsed.reps) throw new Error("Bad");
     if(!parsed.actuals) parsed.actuals = {};
     return parsed;
   }catch(e){
-    return { kpis: defaultKpis, supervisors: defaultSupervisors, actuals:{} };
+    return { kpis: defaultKpis, reps: defaultReps, actuals:{} };
   }
 }
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
 function ensureActuals(){
   for(const k of state.kpis){
-    if(!state.actuals[k.id]) state.actuals[k.id] = Array(state.supervisors.length).fill(0);
-    if(state.actuals[k.id].length !== state.supervisors.length){
+    if(!state.actuals[k.id]) state.actuals[k.id] = Array(state.reps.length).fill(0);
+    if(state.actuals[k.id].length !== state.reps.length){
       const old = state.actuals[k.id];
-      state.actuals[k.id] = Array(state.supervisors.length).fill(0).map((_,i)=> old[i] ?? 0);
+      state.actuals[k.id] = Array(state.reps.length).fill(0).map((_,i)=> old[i] ?? 0);
     }
   }
 }
 
 function round1(n){ return Math.round((n + Number.EPSILON) * 10) / 10; }
 
+function sumWeights(){
+  return state.kpis.reduce((s,k)=> s + (Number(k.weight) || 0), 0);
+}
+
 function scoreFor(kpi, actual){
   const a = Number(actual) || 0;
   const t = Number(kpi.target) || 0;
   const w = Number(kpi.weight) || 0;
   if(t <= 0) return 0;
-  return Math.min(a / t, 1) * w;
+  return Math.min(a / t, 1) * w; // يعطي نقاط من وزن البند
 }
 
-function totalForSupervisor(idx){
+/* ✅ الإجمالي النهائي من 100 حتى لو مجموع الأوزان 80 */
+function totalForRep(idx){
   let total = 0;
+  const maxW = sumWeights();
   for(const k of state.kpis){
     const actual = (state.actuals[k.id] && state.actuals[k.id][idx]) ?? 0;
     total += scoreFor(k, actual);
   }
-  return round1(total);
+  if(maxW <= 0) return 0;
+  const normalized = (total / maxW) * 100;
+  return round1(normalized);
 }
 
 function escapeHtml(s){
@@ -200,6 +223,8 @@ function escapeHtml(s){
 
 function render(){
   ensureActuals();
+
+  document.getElementById("sumWeightsTop").textContent = sumWeights();
 
   const thead = document.getElementById("thead");
   const tbody = document.getElementById("tbody");
@@ -223,7 +248,7 @@ function render(){
   thWeight.textContent = "الوزن";
   tr1.appendChild(thWeight);
 
-  state.supervisors.forEach((name) => {
+  state.reps.forEach((name) => {
     const th = document.createElement("th");
     th.className = "wide";
     th.innerHTML = `${escapeHtml(name)}<div class="hint">Actual / Score</div>`;
@@ -250,10 +275,10 @@ function render(){
     tdWeight.textContent = kpi.weight;
     tr.appendChild(tdWeight);
 
-    state.supervisors.forEach((_, supIdx) => {
+    state.reps.forEach((_, repIdx) => {
       const td = document.createElement("td");
 
-      const val = state.actuals[kpi.id][supIdx] ?? 0;
+      const val = state.actuals[kpi.id][repIdx] ?? 0;
 
       const input = document.createElement("input");
       input.type = "number";
@@ -272,7 +297,7 @@ function render(){
 
       input.addEventListener("input", () => {
         const n = Number(input.value) || 0;
-        state.actuals[kpi.id][supIdx] = n;
+        state.actuals[kpi.id][repIdx] = n;
 
         const newScore = scoreFor(kpi, n);
         scoreSpan.textContent = round1(newScore);
@@ -293,25 +318,27 @@ function render(){
     tbody.appendChild(tr);
   });
 
+  // Totals row
   const trTot = document.createElement("tr");
   trTot.className = "totalRow";
 
   const tdTotName = document.createElement("td");
   tdTotName.className = "stickyRight";
-  tdTotName.textContent = "الإجمالي";
+  tdTotName.textContent = "الإجمالي (من 100)";
   trTot.appendChild(tdTotName);
 
   const tdEmpty1 = document.createElement("td");
   tdEmpty1.textContent = "";
   trTot.appendChild(tdEmpty1);
 
-  const tdEmpty2 = document.createElement("td");
-  tdEmpty2.textContent = "100";
-  trTot.appendChild(tdEmpty2);
+  const tdSumW = document.createElement("td");
+  tdSumW.id = "sumWeightsCell";
+  tdSumW.textContent = sumWeights();
+  trTot.appendChild(tdSumW);
 
-  state.supervisors.forEach((_, supIdx) => {
+  state.reps.forEach((_, repIdx) => {
     const td = document.createElement("td");
-    td.innerHTML = `<span class="totalBadge" id="tot_${supIdx}">0</span>`;
+    td.innerHTML = `<span class="totalBadge" id="tot_${repIdx}">0</span>`;
     trTot.appendChild(td);
   });
 
@@ -321,8 +348,7 @@ function render(){
 }
 
 function renderTotalsAndChart(){
-  // تحديث الإجماليات في الصف الأخير + المتوسط
-  const totals = state.supervisors.map((_, i) => totalForSupervisor(i));
+  const totals = state.reps.map((_, i) => totalForRep(i));
   totals.forEach((t, i) => {
     const el = document.getElementById(`tot_${i}`);
     if(el) el.textContent = t;
@@ -331,11 +357,15 @@ function renderTotalsAndChart(){
   const avg = totals.length ? round1(totals.reduce((a,b)=>a+b,0)/totals.length) : 0;
   document.getElementById("grandTotal").textContent = avg;
 
-  // تحديث الرسم (بدون تعطيل الصفحة لو Chart.js مش موجود)
+  // تحديث مجموع الأوزان في الصف الأخير
+  const sumWEl = document.getElementById("sumWeightsCell");
+  if(sumWEl) sumWEl.textContent = sumWeights();
+
+  // Chart (اختياري) — لا يوقف الصفحة لو غير متاح
   try{
     if(typeof Chart === "undefined"){
       document.getElementById("chartStatus").textContent = "المخطط غير متاح (Chart.js غير محمّل)";
-      document.getElementById("chartHint").textContent = "إذا كان الإنترنت مقفول على الـ CDN، المخطط لن يظهر لكن الإجمالي سيظل يعمل.";
+      document.getElementById("chartHint").textContent = "الإجمالي شغال، لكن المخطط يحتاج تحميل Chart.js أو اتصال يسمح بالـ CDN.";
       return;
     }else{
       document.getElementById("chartStatus").textContent = "النتيجة من 100";
@@ -346,7 +376,7 @@ function renderTotalsAndChart(){
       const ctx = document.getElementById("chart");
       chart = new Chart(ctx, {
         type: "bar",
-        data: { labels: state.supervisors, datasets: [{ label:"النتيجة", data: totals }] },
+        data: { labels: state.reps, datasets: [{ label:"النتيجة", data: totals }] },
         options: {
           responsive:true,
           maintainAspectRatio:false,
@@ -355,22 +385,21 @@ function renderTotalsAndChart(){
         }
       });
     }else{
-      chart.data.labels = state.supervisors;
+      chart.data.labels = state.reps;
       chart.data.datasets[0].data = totals;
       chart.update();
     }
   }catch(e){
-    // لو حصل أي خطأ في الرسم ما يوقف الإجمالي
     document.getElementById("chartStatus").textContent = "حدث خطأ في المخطط";
-    document.getElementById("chartHint").textContent = "الإجمالي شغال، لكن الرسم محتاج Chart.js أو اتصال.";
+    document.getElementById("chartHint").textContent = "الإجمالي شغال، لكن المخطط يحتاج Chart.js.";
   }
 }
 
 // Actions
-document.getElementById("addSupervisorBtn").addEventListener("click", () => {
+document.getElementById("addRepBtn").addEventListener("click", () => {
   const name = prompt("اكتب اسم المندوب الجديد:");
   if(!name) return;
-  state.supervisors.push(name.trim());
+  state.reps.push(name.trim());
   for(const k of state.kpis){
     if(!state.actuals[k.id]) state.actuals[k.id] = [];
     state.actuals[k.id].push(0);
@@ -381,7 +410,7 @@ document.getElementById("addSupervisorBtn").addEventListener("click", () => {
 
 document.getElementById("resetBtn").addEventListener("click", () => {
   if(!confirm("هل تريد مسح جميع القيم؟")) return;
-  state = { kpis: defaultKpis, supervisors: defaultSupervisors, actuals:{} };
+  state = { kpis: defaultKpis, reps: defaultReps, actuals:{} };
   saveState();
   render();
 });
@@ -391,7 +420,7 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "smou-kpi-dubai.json";
+  a.download = "smou-kpi-dubai-reps.json";
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -408,7 +437,7 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
   try{
     const txt = await file.text();
     const imported = JSON.parse(txt);
-    if(!imported.kpis || !imported.supervisors) throw new Error("ملف غير صالح");
+    if(!imported.kpis || !imported.reps) throw new Error("ملف غير صالح");
     if(!imported.actuals) imported.actuals = {};
     state = imported;
     saveState();
