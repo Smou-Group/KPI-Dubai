@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>KPI Dubai | SMOU</title>
 
-  <!-- Chart.js -->
+  <!-- Chart.js (اختياري) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
@@ -20,196 +20,57 @@
       --ok:#2e7d32;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: Tahoma, Arial, sans-serif;
-      background:var(--bg);
-      color:#0b2230;
-      padding:18px;
-    }
+    body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:#0b2230;padding:18px}
     .wrap{max-width:1400px;margin:0 auto}
-    .card{
-      background:var(--card);
-      border-radius:18px;
-      box-shadow:0 14px 40px rgba(0,0,0,.10);
-      padding:16px;
-      border:1px solid rgba(0,0,0,.05);
-    }
-    header{
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:14px;
-    }
-    .title{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .logo{
-      width:44px;height:44px;border-radius:12px;
-      border:1px solid rgba(0,0,0,.08);
-      object-fit:contain;background:#fff;padding:6px;
-    }
+    .card{background:var(--card);border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.10);padding:16px;border:1px solid rgba(0,0,0,.05)}
+    header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .title{display:flex;align-items:center;gap:10px}
+    .logo{width:44px;height:44px;border-radius:12px;border:1px solid rgba(0,0,0,.08);object-fit:contain;background:#fff;padding:6px}
     h1{margin:0;font-size:22px}
     .sub{color:var(--muted);font-size:13px;margin-top:2px}
-    .toolbar{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      align-items:center;
-    }
-    button,.chip, input[type="text"]{
-      font-family: inherit;
-      border-radius:12px;
-      border:1px solid rgba(0,0,0,.12);
-      background:#fff;
-      padding:10px 12px;
-      cursor:pointer;
-      font-weight:700;
-    }
-    button{
-      background:var(--brand);
-      color:#fff;
-      border:1px solid rgba(255,255,255,.15);
-      box-shadow:0 10px 22px rgba(28,102,112,.15);
-    }
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    button,.chip{font-family:inherit;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px 12px;font-weight:700}
+    button{background:var(--brand);color:#fff;border:1px solid rgba(255,255,255,.15);cursor:pointer;box-shadow:0 10px 22px rgba(28,102,112,.15)}
     button:hover{background:var(--brand2)}
-    .chip{
-      background:#fff;
-      color:#0b2230;
-      cursor:default;
-      font-weight:800;
-    }
+    .chip{background:#fff;color:#0b2230;cursor:default;font-weight:800}
     .chip b{color:var(--brand)}
-    .danger{background:#fff;color:var(--danger);border-color: rgba(198,40,40,.35); cursor:pointer}
+    .danger{background:#fff;color:var(--danger);border-color:rgba(198,40,40,.35);cursor:pointer}
     .danger:hover{background:#fff1f1}
     .mutedBtn{background:#0f2f35}
     .mutedBtn:hover{background:#0b2429}
     .fileInput{display:none}
 
-    .grid2{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap:14px;
-      margin-top:14px;
-    }
-    @media (max-width: 1100px){
-      .grid2{grid-template-columns:1fr}
-    }
+    .grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:14px}
+    @media (max-width:1100px){.grid2{grid-template-columns:1fr}}
 
-    /* Table */
-    .tableWrap{
-      overflow:auto;
-      border-radius:14px;
-      border:1px solid rgba(0,0,0,.08);
-    }
-    table{
-      border-collapse:separate;
-      border-spacing:0;
-      width:100%;
-      min-width:1100px;
-      background:#fff;
-    }
-    thead th{
-      position:sticky;
-      top:0;
-      z-index:2;
-      background: #e9f1f2;
-      border-bottom:1px solid rgba(0,0,0,.10);
-      padding:10px;
-      font-size:13px;
-      white-space:nowrap;
-      text-align:center;
-    }
-    tbody td{
-      border-bottom:1px solid var(--grid);
-      padding:8px;
-      text-align:center;
-      vertical-align:middle;
-      font-size:13px;
-      background:#fff;
-    }
+    .tableWrap{overflow:auto;border-radius:14px;border:1px solid rgba(0,0,0,.08)}
+    table{border-collapse:separate;border-spacing:0;width:100%;min-width:1100px;background:#fff}
+    thead th{position:sticky;top:0;z-index:2;background:#e9f1f2;border-bottom:1px solid rgba(0,0,0,.10);padding:10px;font-size:13px;white-space:nowrap;text-align:center}
+    tbody td{border-bottom:1px solid var(--grid);padding:8px;text-align:center;vertical-align:middle;font-size:13px;background:#fff}
     tbody tr:hover td{background:#fbfdff}
-    th.stickyRight, td.stickyRight{
-      position:sticky;
-      right:0;
-      z-index:3;
-      background:#fff;
-      box-shadow: -10px 0 14px rgba(0,0,0,.04);
-      text-align:right;
-      min-width:260px;
-    }
+    th.stickyRight, td.stickyRight{position:sticky;right:0;z-index:3;background:#fff;box-shadow:-10px 0 14px rgba(0,0,0,.04);text-align:right;min-width:260px}
     thead th.stickyRight{background:#e9f1f2}
     th.small, td.small{min-width:84px}
     th.wide, td.wide{min-width:120px}
-    .kpiName{
-      font-weight:800;
-      line-height:1.25;
-    }
+    .kpiName{font-weight:800;line-height:1.25}
     .hint{color:var(--muted);font-size:12px;margin-top:3px}
 
-    input[type="number"]{
-      width:88px;
-      padding:8px 10px;
-      border-radius:10px;
-      border:1px solid rgba(0,0,0,.14);
-      font-weight:800;
-      text-align:center;
-      outline:none;
-    }
-    input[type="number"]:focus{
-      border-color: var(--brand);
-      box-shadow:0 0 0 3px rgba(28,102,112,.12);
-    }
-    .scoreCell{
-      font-weight:900;
-      border-right:1px solid var(--grid);
-      min-width:78px;
-    }
+    input[type="number"]{width:88px;padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,.14);font-weight:800;text-align:center;outline:none}
+    input[type="number"]:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(28,102,112,.12)}
+    .scoreCell{font-weight:900;border-right:1px solid var(--grid);min-width:78px;margin-top:6px}
     .scoreOk{color:var(--ok)}
     .scoreBad{color:var(--danger)}
-    .totalRow td{
-      background:#0f2f35 !important;
-      color:#fff;
-      font-weight:900;
-      border-bottom:none;
-    }
-    .totalRow td.stickyRight{background:#0f2f35 !important}
-    .totalBadge{
-      display:inline-block;
-      padding:6px 10px;
-      border-radius:999px;
-      background:rgba(255,255,255,.12);
-      border:1px solid rgba(255,255,255,.18);
-      min-width:64px;
-    }
 
-    /* Chart card */
-    .chartCard{
-      padding:14px;
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:14px;
-      background:#fff;
-    }
-    .chartHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
+    .totalRow td{background:#0f2f35 !important;color:#fff;font-weight:900;border-bottom:none}
+    .totalRow td.stickyRight{background:#0f2f35 !important}
+    .totalBadge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);min-width:64px}
+
+    .chartCard{padding:14px;border:1px solid rgba(0,0,0,.08);border-radius:14px;background:#fff}
+    .chartHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
     .chartHead h2{margin:0;font-size:16px}
     .legendNote{color:var(--muted);font-size:12px}
     canvas{max-height:420px}
-    .foot{
-      margin-top:10px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.4;
-    }
+    .foot{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.4}
   </style>
 </head>
 
@@ -222,23 +83,22 @@
         <img class="logo" src="logo.png" alt="SMOU Logo" onerror="this.style.display='none'">
         <div>
           <h1>نظام KPI للمشرفين — دبي</h1>
-          <div class="sub">أدخل القيم لكل مشرف، وسيتم احتساب النتيجة من 100 وإنشاء مخطط الأداء تلقائيًا.</div>
+          <div class="sub">أدخل القيم لكل مشرف، وسيتم احتساب النتيجة من 100 وإنشاء مخطط الأداء (إذا توفّر Chart.js).</div>
         </div>
       </div>
 
       <div class="toolbar">
-        <span class="chip">الإجمالي: <b id="grandTotal">—</b></span>
+        <span class="chip">متوسط الإجمالي: <b id="grandTotal">0</b> / 100</span>
         <button class="mutedBtn" id="addSupervisorBtn">إضافة مشرف</button>
-        <button id="exportBtn">تصدير البيانات (JSON)</button>
+        <button id="exportBtn">تصدير (JSON)</button>
         <button id="importBtn">استيراد (JSON)</button>
         <input class="fileInput" id="importFile" type="file" accept="application/json" />
-        <button class="danger" id="resetBtn">مسح الكل</button>
+        <button class="danger" id="resetBtn">مسح القيم</button>
       </div>
     </header>
 
     <div class="grid2">
 
-      <!-- TABLE -->
       <div>
         <div class="tableWrap">
           <table id="kpiTable">
@@ -247,37 +107,27 @@
           </table>
         </div>
         <div class="foot">
-          ✅ طريقة الحساب: لكل بند وزن (Weight) + قيمة مطلوبة (Target).<br>
-          النقاط = min(Actual ÷ Target, 1) × Weight. والنتيجة النهائية = مجموع نقاط البنود (حتى 100).<br>
-          يمكنك تعديل البنود/الأوزان/التارجت من داخل الكود بسهولة أو أخبرني أعدله لك حسب نظامكم.
+          طريقة الحساب: النقاط = min(Actual ÷ Target, 1) × Weight، والنتيجة النهائية = مجموع النقاط حتى 100.
         </div>
       </div>
 
-      <!-- CHART -->
       <div class="chartCard">
         <div class="chartHead">
           <h2>مخطط الأداء</h2>
-          <div class="legendNote">النتيجة من 100</div>
+          <div class="legendNote" id="chartStatus">النتيجة من 100</div>
         </div>
         <canvas id="chart"></canvas>
+        <div class="foot" id="chartHint"></div>
       </div>
 
     </div>
+
   </div>
 </div>
 
 <script>
-/**
- * KPI Web App (Single-file)
- * - Saves to localStorage automatically
- * - Export/Import JSON
- * - Chart (Chart.js)
- * - RTL friendly
- */
+const STORAGE_KEY = "smou_kpi_dubai_v2";
 
-const STORAGE_KEY = "smou_kpi_dubai_v1";
-
-// 1) Define KPI items (based on your image)
 const defaultKpis = [
   { id:"k1", name:"عدد الزيارات الشهرية لمواقع المشاريع", target:80,  weight:10 },
   { id:"k2", name:"عدد الزيارات الشهرية للمكاتب",         target:100, weight:10 },
@@ -289,44 +139,26 @@ const defaultKpis = [
   { id:"k8", name:"إرسال كشف السوشيال ميديا",              target:4,   weight:10 },
 ];
 
-// 2) Default supervisors (edit as you like)
 const defaultSupervisors = [
-  "أحمد عبدالله",
-  "ماهر عامر",
-  "رؤوف المنشر",
-  "عمر سلمان",
-  "محمد السعدوني",
-  "أحمد العقاري",
-  "أمير نبيل"
+  "أحمد عبدالله","ماهر عامر","رؤوف المشير","عمر شلش",
+  "محمد السعودي","أحمد المغازي","أمير نبيل"
 ];
 
-// App state
 let state = loadState();
+let chart = null;
 
-// Chart
-let chart;
-
-// ---------- State helpers ----------
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw){
-      return {
-        kpis: defaultKpis,
-        supervisors: defaultSupervisors,
-        // actuals[kpiId][supervisorIndex] = number
-        actuals: {}
-      };
-    }
+    if(!raw) return { kpis: defaultKpis, supervisors: defaultSupervisors, actuals:{} };
     const parsed = JSON.parse(raw);
-    // minimal validation
-    if(!parsed.kpis || !parsed.supervisors) throw new Error("Bad state");
+    if(!parsed.kpis || !parsed.supervisors) throw new Error("Bad");
+    if(!parsed.actuals) parsed.actuals = {};
     return parsed;
   }catch(e){
     return { kpis: defaultKpis, supervisors: defaultSupervisors, actuals:{} };
   }
 }
-
 function saveState(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -334,22 +166,21 @@ function saveState(){
 function ensureActuals(){
   for(const k of state.kpis){
     if(!state.actuals[k.id]) state.actuals[k.id] = Array(state.supervisors.length).fill(0);
-    // if supervisors changed
     if(state.actuals[k.id].length !== state.supervisors.length){
-      const arr = state.actuals[k.id];
-      state.actuals[k.id] = Array(state.supervisors.length).fill(0).map((_,i)=> arr[i] ?? 0);
+      const old = state.actuals[k.id];
+      state.actuals[k.id] = Array(state.supervisors.length).fill(0).map((_,i)=> old[i] ?? 0);
     }
   }
 }
 
-// ---------- Scoring ----------
+function round1(n){ return Math.round((n + Number.EPSILON) * 10) / 10; }
+
 function scoreFor(kpi, actual){
   const a = Number(actual) || 0;
   const t = Number(kpi.target) || 0;
   const w = Number(kpi.weight) || 0;
   if(t <= 0) return 0;
-  const ratio = Math.min(a / t, 1);
-  return ratio * w;
+  return Math.min(a / t, 1) * w;
 }
 
 function totalForSupervisor(idx){
@@ -361,15 +192,15 @@ function totalForSupervisor(idx){
   return round1(total);
 }
 
-function round1(n){
-  return Math.round((n + Number.EPSILON) * 10) / 10;
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
 }
 
-// ---------- Render Table ----------
 function render(){
   ensureActuals();
 
-  // Build THEAD
   const thead = document.getElementById("thead");
   const tbody = document.getElementById("tbody");
   thead.innerHTML = "";
@@ -377,13 +208,11 @@ function render(){
 
   const tr1 = document.createElement("tr");
 
-  // Right sticky KPI column
   const thKpi = document.createElement("th");
   thKpi.className = "stickyRight wide";
   thKpi.textContent = "بنود التقييم";
   tr1.appendChild(thKpi);
 
-  // Target & Weight columns
   const thTarget = document.createElement("th");
   thTarget.className = "small";
   thTarget.textContent = "المطلوب";
@@ -394,8 +223,7 @@ function render(){
   thWeight.textContent = "الوزن";
   tr1.appendChild(thWeight);
 
-  // Supervisor columns (each has: actual + score)
-  state.supervisors.forEach((name, i) => {
+  state.supervisors.forEach((name) => {
     const th = document.createElement("th");
     th.className = "wide";
     th.innerHTML = `${escapeHtml(name)}<div class="hint">Actual / Score</div>`;
@@ -404,8 +232,7 @@ function render(){
 
   thead.appendChild(tr1);
 
-  // Build KPI rows
-  state.kpis.forEach((kpi, rowIdx) => {
+  state.kpis.forEach((kpi) => {
     const tr = document.createElement("tr");
 
     const tdName = document.createElement("td");
@@ -426,24 +253,20 @@ function render(){
     state.supervisors.forEach((_, supIdx) => {
       const td = document.createElement("td");
 
-      const val = (state.actuals[kpi.id][supIdx] ?? 0);
+      const val = state.actuals[kpi.id][supIdx] ?? 0;
 
       const input = document.createElement("input");
       input.type = "number";
       input.min = "0";
       input.step = "1";
       input.value = val;
-      input.title = "Actual";
 
       const scoreSpan = document.createElement("div");
       scoreSpan.className = "scoreCell";
-      scoreSpan.style.marginTop = "6px";
-
       const s = scoreFor(kpi, val);
       scoreSpan.textContent = round1(s);
 
-      // Coloring
-      const ratio = (Number(kpi.target) > 0) ? Math.min((Number(val)||0)/Number(kpi.target), 1) : 0;
+      const ratio = kpi.target > 0 ? Math.min((Number(val)||0)/kpi.target, 1) : 0;
       scoreSpan.classList.toggle("scoreOk", ratio >= 0.8);
       scoreSpan.classList.toggle("scoreBad", ratio < 0.5);
 
@@ -454,12 +277,12 @@ function render(){
         const newScore = scoreFor(kpi, n);
         scoreSpan.textContent = round1(newScore);
 
-        const newRatio = (Number(kpi.target) > 0) ? Math.min(n/Number(kpi.target), 1) : 0;
+        const newRatio = kpi.target > 0 ? Math.min(n/kpi.target, 1) : 0;
         scoreSpan.classList.toggle("scoreOk", newRatio >= 0.8);
         scoreSpan.classList.toggle("scoreBad", newRatio < 0.5);
 
         saveState();
-        renderTotalsAndChart(); // lightweight update
+        renderTotalsAndChart();
       });
 
       td.appendChild(input);
@@ -470,7 +293,6 @@ function render(){
     tbody.appendChild(tr);
   });
 
-  // Totals row
   const trTot = document.createElement("tr");
   trTot.className = "totalRow";
 
@@ -489,8 +311,7 @@ function render(){
 
   state.supervisors.forEach((_, supIdx) => {
     const td = document.createElement("td");
-    const total = totalForSupervisor(supIdx);
-    td.innerHTML = `<span class="totalBadge">${total}</span>`;
+    td.innerHTML = `<span class="totalBadge" id="tot_${supIdx}">0</span>`;
     trTot.appendChild(td);
   });
 
@@ -500,55 +321,56 @@ function render(){
 }
 
 function renderTotalsAndChart(){
-  // Grand total (avg)
+  // تحديث الإجماليات في الصف الأخير + المتوسط
   const totals = state.supervisors.map((_, i) => totalForSupervisor(i));
+  totals.forEach((t, i) => {
+    const el = document.getElementById(`tot_${i}`);
+    if(el) el.textContent = t;
+  });
+
   const avg = totals.length ? round1(totals.reduce((a,b)=>a+b,0)/totals.length) : 0;
   document.getElementById("grandTotal").textContent = avg;
 
-  // Chart
-  const labels = state.supervisors;
-  const data = totals;
+  // تحديث الرسم (بدون تعطيل الصفحة لو Chart.js مش موجود)
+  try{
+    if(typeof Chart === "undefined"){
+      document.getElementById("chartStatus").textContent = "المخطط غير متاح (Chart.js غير محمّل)";
+      document.getElementById("chartHint").textContent = "إذا كان الإنترنت مقفول على الـ CDN، المخطط لن يظهر لكن الإجمالي سيظل يعمل.";
+      return;
+    }else{
+      document.getElementById("chartStatus").textContent = "النتيجة من 100";
+      document.getElementById("chartHint").textContent = "";
+    }
 
-  if(!chart){
-    const ctx = document.getElementById("chart");
-    chart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          label: "النتيجة",
-          data
-        }]
-      },
-      options: {
-        responsive:true,
-        maintainAspectRatio:false,
-        scales: {
-          y: { beginAtZero:true, max:100 }
-        },
-        plugins:{
-          legend:{display:false},
-          tooltip:{
-            callbacks:{
-              label: (item)=> ` ${item.parsed.y} / 100`
-            }
-          }
+    if(!chart){
+      const ctx = document.getElementById("chart");
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: { labels: state.supervisors, datasets: [{ label:"النتيجة", data: totals }] },
+        options: {
+          responsive:true,
+          maintainAspectRatio:false,
+          scales:{ y:{ beginAtZero:true, max:100 } },
+          plugins:{ legend:{display:false} }
         }
-      }
-    });
-  }else{
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = data;
-    chart.update();
+      });
+    }else{
+      chart.data.labels = state.supervisors;
+      chart.data.datasets[0].data = totals;
+      chart.update();
+    }
+  }catch(e){
+    // لو حصل أي خطأ في الرسم ما يوقف الإجمالي
+    document.getElementById("chartStatus").textContent = "حدث خطأ في المخطط";
+    document.getElementById("chartHint").textContent = "الإجمالي شغال، لكن الرسم محتاج Chart.js أو اتصال.";
   }
 }
 
-// ---------- UI Actions ----------
+// Actions
 document.getElementById("addSupervisorBtn").addEventListener("click", () => {
-  const name = prompt("اكتب اسم المشرف الجديد:");
+  const name = prompt("اكتب اسم المندوب الجديد:");
   if(!name) return;
   state.supervisors.push(name.trim());
-  // expand actuals arrays
   for(const k of state.kpis){
     if(!state.actuals[k.id]) state.actuals[k.id] = [];
     state.actuals[k.id].push(0);
@@ -558,8 +380,7 @@ document.getElementById("addSupervisorBtn").addEventListener("click", () => {
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
-  const ok = confirm("هل تريد مسح جميع القيم؟");
-  if(!ok) return;
+  if(!confirm("هل تريد مسح جميع القيم؟")) return;
   state = { kpis: defaultKpis, supervisors: defaultSupervisors, actuals:{} };
   saveState();
   render();
@@ -588,6 +409,7 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
     const txt = await file.text();
     const imported = JSON.parse(txt);
     if(!imported.kpis || !imported.supervisors) throw new Error("ملف غير صالح");
+    if(!imported.actuals) imported.actuals = {};
     state = imported;
     saveState();
     render();
@@ -598,14 +420,7 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
   }
 });
 
-// ---------- Utils ----------
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, (m)=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-  }[m]));
-}
-
-// Initial render
+// Start
 render();
 </script>
 </body>
